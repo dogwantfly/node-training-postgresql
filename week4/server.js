@@ -13,22 +13,19 @@ function isNotValidString (value) {
 function isNotValidInteger (value) {
   return typeof value !== "number" || value < 0 || value % 1 !== 0
 }
-const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-const sendResponse = (res, statusCode, payload, headers = { "Content-Type": "application/json" }) => {
+const isValidUUID = (uuid) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(uuid)
+const headers = {
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, Content-Length, X-Requested-With",
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "PATCH, POST, GET, OPTIONS,DELETE",
+  "Content-Type": "application/json"
+}
+const sendResponse = (res, statusCode, payload, headers = headers) => {
   res.writeHead(statusCode, headers)
   res.end(JSON.stringify(payload))
 }
 
-
-
 const requestListener = async (req, res) => {
-  const headers = {
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, Content-Length, X-Requested-With",
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "PATCH, POST, GET, OPTIONS,DELETE",
-    "Content-Type": "application/json"
-  }
   let body = ""
   req.on("data", (chunk) => {
     body += chunk
@@ -43,13 +40,11 @@ const requestListener = async (req, res) => {
         status: "success",
         data: packages
       }, headers)
-      res.end()
     } catch (error) {
       sendResponse(res, 500, {
         status: "error",
         message: "伺服器錯誤"
       }, headers)
-      res.end()
     }
   } else if (req.url === "/api/credit-package" && req.method === "POST") {
     req.on("end", async () => {
@@ -62,7 +57,6 @@ const requestListener = async (req, res) => {
             status: "failed",
             message: "欄位未填寫正確"
           }, headers)
-          res.end()
           return
         }
         const creditPackageRepo = await AppDataSource.getRepository("CreditPackage")
@@ -76,7 +70,6 @@ const requestListener = async (req, res) => {
             status: "failed",
             message: "資料重複"
           }, headers)
-          res.end()
           return
         }
         const newPackage = await creditPackageRepo.create({
@@ -89,13 +82,11 @@ const requestListener = async (req, res) => {
           status: "success",
           data: result
         }, headers)
-        res.end()
       } catch (error) {
         sendResponse(res, 500, {
           status: "error",
           message: "伺服器錯誤"
         }, headers)
-        res.end()
       }
     })
   } else if (req.url.startsWith("/api/credit-package") && req.method === "DELETE") {
@@ -106,7 +97,6 @@ const requestListener = async (req, res) => {
           status: "failed",
           message: "ID錯誤"
         }, headers)
-        res.end()
         return
       }
       const result = await AppDataSource.getRepository("CreditPackage").delete(packageId)
@@ -115,19 +105,16 @@ const requestListener = async (req, res) => {
           status: "failed",
           message: "ID錯誤"
         }, headers)
-        res.end()
         return
       }
       sendResponse(res, 200, {
         status: "success"
       }, headers)
-      res.end()
     } catch (error) {
       sendResponse(res, 500, {  
         status: "error",
         message: "伺服器錯誤"
       }, headers)
-      res.end()
     }
   } else if (req.url === "/api/coaches/skill" && req.method === "GET") {
     try {
@@ -144,7 +131,6 @@ const requestListener = async (req, res) => {
         status: "error",
         message: "伺服器錯誤"
       }, headers)
-      res.end()
     }
   } else if (req.url === "/api/coaches/skill" && req.method === "POST") {
     req.on("end", async () => {
@@ -155,7 +141,6 @@ const requestListener = async (req, res) => {
             status: "failed",
             message: "欄位未填寫正確"
           }, headers)
-          res.end()
           return
         }
         const skillRepo = await AppDataSource.getRepository("Skill")
@@ -169,7 +154,6 @@ const requestListener = async (req, res) => {
             status: "failed",
             message: "資料重複"
           }, headers)
-          res.end()
           return
         }
         const newSkill = await skillRepo.create({
@@ -180,24 +164,21 @@ const requestListener = async (req, res) => {
           status: "success",
           data: result
         }, headers)
-        res.end()
       } catch (error) {
         sendResponse(res, 500, {
           status: "error",
           message: "伺服器錯誤"
         }, headers)
-        res.end()
       }
     })
   } else if (req.url.startsWith("/api/coaches/skill") && req.method === "DELETE") {
     try {
       const skillId = req.url.split("/").pop()
-      if (isUndefined(skillId) || isNotValidString(skillId) || !uuidRegex.test(skillId)) {        
+      if (isUndefined(skillId) || isNotValidString(skillId) || !isValidUUID(skillId)) {        
         sendResponse(res, 400, {
           status: "failed",
           message: "ID 錯誤"
         }, headers)
-        res.end()
         return
       }
       const result = await AppDataSource.getRepository("Skill").delete(skillId)
@@ -206,29 +187,24 @@ const requestListener = async (req, res) => {
           status: "failed",
           message: "ID 錯誤"          
         }, headers)
-        res.end()
         return
       }
       sendResponse(res, 200, {
         status: "success"
       }, headers)
-      res.end()
     } catch (error) {
       sendResponse(res, 500, {  
         status: "error",
         message: "伺服器錯誤"
       }, headers)
-      res.end()
     }
   } else if (req.method === "OPTIONS") {
     sendResponse(res, 200, {}, headers)
-    res.end()
   } else {
     sendResponse(res, 404, {
       status: "failed",
       message: "無此網站路由",
     }, headers)
-    res.end()
   }
 }
 
