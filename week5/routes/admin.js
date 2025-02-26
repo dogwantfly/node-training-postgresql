@@ -1,25 +1,16 @@
-const express = require('express')
-
+const express = require('express')    
 const router = express.Router()
 const { dataSource } = require('../db/data-source')
 const logger = require('../utils/logger')('Admin')
 
-function isUndefined (value) {
-  return value === undefined
-}
+const { isUndefined, isNotValidString, isNotValidInteger, isNotValidUuid } = require('../utils/validUtils')
 
-function isNotValidString (value) {
-  return typeof value !== 'string' || value.trim().length === 0 || value === ''
-}
 
-function isNotValidInteger (value) {
-  return typeof value !== 'number' || value < 0 || value % 1 !== 0
-}
 
-const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/
-function isNotValidUuid (value) {
-  return typeof value !== 'string' || !uuidRegex.test(value)
-}
+
+
+
+
 
 router.post('/coaches/courses', async (req, res, next) => {
   try {

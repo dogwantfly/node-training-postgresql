@@ -7,13 +7,11 @@ const logger = require('../utils/logger')('Users');
 
 const saltRounds = 10;
 
-function isUndefined(value) {
-  return value === undefined;
-}
+const {
+  isUndefined,
+  isNotValidString,
+} = require('../utils/validUtils');
 
-function isNotValidSting(value) {
-  return typeof value !== 'string' || value.trim().length === 0 || value === '';
-}
 
 // 新增使用者
 router.post('/signup', async (req, res, next) => {
@@ -23,11 +21,11 @@ router.post('/signup', async (req, res, next) => {
     // 驗證必填欄位
     if (
       isUndefined(name) ||
-      isNotValidSting(name) ||
+      isNotValidString(name) ||
       isUndefined(email) ||
-      isNotValidSting(email) ||
+      isNotValidString(email) ||
       isUndefined(password) ||
-      isNotValidSting(password)
+      isNotValidString(password)
     ) {
       logger.warn('欄位未填寫正確');
       res.status(400).json({
