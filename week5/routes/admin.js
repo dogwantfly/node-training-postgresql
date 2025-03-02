@@ -3,14 +3,7 @@ const router = express.Router()
 const { dataSource } = require('../db/data-source')
 const logger = require('../utils/logger')('Admin')
 
-const { isUndefined, isNotValidString, isNotValidInteger, isNotValidUuid } = require('../utils/validUtils')
-
-
-
-
-
-
-
+const { isUndefined, isNotValidString, isNotValidInteger, isNotValidUuid, isNotValidDate } = require('../utils/validUtils')
 
 router.post('/coaches/courses', async (req, res, next) => {
   try {
@@ -25,12 +18,12 @@ router.post('/coaches/courses', async (req, res, next) => {
         message: '使用者或 skill id 格式不正確'
       })
     }
-    if (isUndefined(userId) || isNotValidString(userId) ||
-      isUndefined(skillId) || isNotValidString(skillId) ||
+    if (isUndefined(userId) || isNotValidUuid(userId) ||
+      isUndefined(skillId) || isNotValidUuid(skillId) ||
       isUndefined(name) || isNotValidString(name) ||
       isUndefined(description) || isNotValidString(description) ||
-      isUndefined(startAt) || isNotValidString(startAt) ||
-      isUndefined(endAt) || isNotValidString(endAt) ||
+      isUndefined(startAt) || isNotValidDate(startAt) ||
+      isUndefined(endAt) || isNotValidDate(endAt) ||
       isUndefined(maxParticipants) || isNotValidInteger(maxParticipants) ||
       isUndefined(meetingUrl) || isNotValidString(meetingUrl) || !meetingUrl.startsWith('https')) {
       logger.warn('欄位未填寫正確')
@@ -57,6 +50,16 @@ router.post('/coaches/courses', async (req, res, next) => {
       res.status(400).json({
         status: 'failed',
         message: '使用者尚未成為教練'
+      })
+      return
+    }
+    const skillRepo = dataSource.getRepository('Skill')
+    const existingSkill = await skillRepo.findOne({ where: { id: skillId } })
+    if (!existingSkill) {
+      logger.warn('找不到此技能')
+      res.status(400).json({
+        status: 'failed',
+        message: '找不到此技能'
       })
       return
     }
@@ -108,12 +111,12 @@ router.put('/coaches/courses/:courseId', async (req, res, next) => {
           message: 'skill id 格式不正確'
         })
     }
-    if (isNotValidString(courseId) ||
-      isUndefined(skillId) || isNotValidString(skillId) ||
+    if (isNotValidUuid(courseId) ||
+      isUndefined(skillId) || isNotValidUuid(skillId) ||
       isUndefined(name) || isNotValidString(name) ||
       isUndefined(description) || isNotValidString(description) ||
-      isUndefined(startAt) || isNotValidString(startAt) ||
-      isUndefined(endAt) || isNotValidString(endAt) ||
+      isUndefined(startAt) || isNotValidDate(startAt) ||
+      isUndefined(endAt) || isNotValidDate(endAt) ||
       isUndefined(maxParticipants) || isNotValidInteger(maxParticipants) ||
       isUndefined(meetingUrl) || isNotValidString(meetingUrl) || !meetingUrl.startsWith('https')) {
       logger.warn('欄位未填寫正確')
@@ -132,6 +135,16 @@ router.put('/coaches/courses/:courseId', async (req, res, next) => {
       res.status(400).json({
         status: 'failed',
         message: '課程不存在'
+      })
+      return
+    }
+    const skillRepo = dataSource.getRepository('Skill')
+    const existingSkill = await skillRepo.findOne({ where: { id: skillId } })
+    if (!existingSkill) {
+      logger.warn('找不到此技能')
+      res.status(400).json({
+        status: 'failed',
+        message: '找不到此技能'
       })
       return
     }

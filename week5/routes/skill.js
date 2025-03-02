@@ -5,7 +5,7 @@ const { dataSource } = require('../db/data-source');
 
 const logger = require('../utils/logger')('Skill');
 
-const { isUndefined, isNotValidString } = require('../utils/validUtils');
+const { isUndefined, isNotValidString, isNotValidUuid } = require('../utils/validUtils');
 
 router.get('/', async (req, res, next) => {
   try {
@@ -62,10 +62,10 @@ router.post('/', async (req, res, next) => {
 router.delete('/:skillId', async (req, res, next) => {
   try {
     const { skillId } = req.params;
-    if (isUndefined(skillId) || isNotValidString(skillId)) {
+    if (isUndefined(skillId) || isNotValidString(skillId) || isNotValidUuid(skillId)) {
       res.status(400).json({
         status: 'failed',
-        message: 'ID錯誤',
+        message: 'ID 錯誤',
       });
       return;
     }
@@ -73,7 +73,7 @@ router.delete('/:skillId', async (req, res, next) => {
     if (result.affected === 0) {
       res.status(400).json({
         status: 'failed',
-        message: 'ID錯誤',
+        message: 'ID 錯誤',
       });
       return;
     }

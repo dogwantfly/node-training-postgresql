@@ -10,20 +10,21 @@ const saltRounds = 10;
 const {
   isUndefined,
   isNotValidString,
+  isNotValidEmail,
+  isNotValidPassword,
 } = require('../utils/validUtils');
 
 
 // 新增使用者
 router.post('/signup', async (req, res, next) => {
   try {
-    const passwordPattern = /(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,16}/;
     const { name, email, password } = req.body;
     // 驗證必填欄位
     if (
       isUndefined(name) ||
       isNotValidString(name) ||
       isUndefined(email) ||
-      isNotValidString(email) ||
+      isNotValidEmail(email) ||
       isUndefined(password) ||
       isNotValidString(password)
     ) {
@@ -34,7 +35,7 @@ router.post('/signup', async (req, res, next) => {
       });
       return;
     }
-    if (!passwordPattern.test(password)) {
+    if (isNotValidPassword(password)) {
       logger.warn(
         '建立使用者錯誤: 密碼不符合規則，需要包含英文數字大小寫，最短8個字，最長16個字'
       );
