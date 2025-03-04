@@ -2,8 +2,15 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 
 const router = express.Router();
+const config = require('../config/index');
 const { dataSource } = require('../db/data-source');
 const logger = require('../utils/logger')('Users');
+const generateJWT = require('../utils/generateJWT');
+const auth = require('../middlewares/auth')({
+  secret: config.get('secret').jwtSecret,
+  userRepository: dataSource.getRepository('User'),
+  logger,
+});
 
 const saltRounds = 10;
 
@@ -13,7 +20,6 @@ const {
   isNotValidEmail,
   isNotValidPassword,
 } = require('../utils/validUtils');
-
 
 // 新增使用者
 router.post('/signup', async (req, res, next) => {
