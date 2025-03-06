@@ -133,6 +133,7 @@ router.post('/login', async (req, res, next) => {
     const token = await generateJWT(
       {
         id: existingUser.id,
+        role: existingUser.role,
       },
       config.get('secret.jwtSecret'),
       {
