@@ -12,8 +12,6 @@ const auth = require('../middlewares/auth')({
   logger,
 });
 
-const saltRounds = 10;
-
 const {
   isUndefined,
   isNotValidString,
@@ -68,7 +66,8 @@ router.post('/signup', async (req, res, next) => {
     }
 
     // 建立新使用者
-    const hashPassword = await bcrypt.hash(password, saltRounds);
+    const salt = await bcrypt.genSalt(10);
+    const hashPassword = await bcrypt.hash(password, salt);
     const newUser = userRepository.create({
       name,
       email,
