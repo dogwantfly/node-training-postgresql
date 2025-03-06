@@ -16,6 +16,7 @@ const {
   isNotValidUuid,
   isNotValidDate,
 } = require('../utils/validUtils');
+const appError = require('../utils/appError');
 
 router.post('/coaches/courses', auth, isCoach, async (req, res, next) => {
   try {
@@ -31,10 +32,8 @@ router.post('/coaches/courses', auth, isCoach, async (req, res, next) => {
     } = req.body;
     if (isNotValidUuid(userId) || isNotValidUuid(skillId)) {
       logger.warn('使用者或 skill id 格式不正確');
-      return res.status(400).json({
-        status: 'failed',
-        message: '使用者或 skill id 格式不正確',
-      });
+      next(appError(400, '使用者或 skill id 格式不正確'));
+      return;
     }
     if (
       isUndefined(userId) ||
@@ -56,10 +55,7 @@ router.post('/coaches/courses', auth, isCoach, async (req, res, next) => {
       !meetingUrl.startsWith('https')
     ) {
       logger.warn('欄位未填寫正確');
-      res.status(400).json({
-        status: 'failed',
-        message: '欄位未填寫正確',
-      });
+      next(appError(400, '欄位未填寫正確'));
       return;
     }
     const userRepository = dataSource.getRepository('User');
@@ -69,27 +65,18 @@ router.post('/coaches/courses', auth, isCoach, async (req, res, next) => {
     });
     if (!existingUser) {
       logger.warn('使用者不存在');
-      res.status(400).json({
-        status: 'failed',
-        message: '使用者不存在',
-      });
+      next(appError(400, '使用者不存在'));
       return;
     } else if (existingUser.role !== 'COACH') {
       logger.warn('使用者尚未成為教練');
-      res.status(400).json({
-        status: 'failed',
-        message: '使用者尚未成為教練',
-      });
+      next(appError(400, '使用者尚未成為教練'));
       return;
     }
     const skillRepo = dataSource.getRepository('Skill');
     const existingSkill = await skillRepo.findOne({ where: { id: skillId } });
     if (!existingSkill) {
       logger.warn('找不到此技能');
-      res.status(400).json({
-        status: 'failed',
-        message: '找不到此技能',
-      });
+      next(appError(400, '找不到此技能'));
       return;
     }
     const courseRepo = dataSource.getRepository('Course');
@@ -128,10 +115,8 @@ router.put(
       const { courseId } = req.params;
       if (isNotValidUuid(courseId)) {
         logger.warn('課程 id 格式不正確');
-        return res.status(400).json({
-          status: 'failed',
-          message: '課程 id 格式不正確',
-        });
+        next(appError(400, '課程 id 格式不正確'));
+        return;
       }
       const {
         skill_id: skillId,
@@ -144,10 +129,8 @@ router.put(
       } = req.body;
       if (isNotValidUuid(skillId)) {
         logger.warn('skill id 格式不正確');
-        return res.status(400).json({
-          status: 'failed',
-          message: 'skill id 格式不正確',
-        });
+        next(appError(400, 'skill id 格式不正確'));
+        return;
       }
       if (
         isNotValidUuid(courseId) ||
@@ -168,10 +151,7 @@ router.put(
         !meetingUrl.startsWith('https')
       ) {
         logger.warn('欄位未填寫正確');
-        res.status(400).json({
-          status: 'failed',
-          message: '欄位未填寫正確',
-        });
+        next(appError(400, '欄位未填寫正確'));
         return;
       }
       const courseRepo = dataSource.getRepository('Course');
@@ -180,20 +160,14 @@ router.put(
       });
       if (!existingCourse) {
         logger.warn('課程不存在');
-        res.status(400).json({
-          status: 'failed',
-          message: '課程不存在',
-        });
+        next(appError(400, '課程不存在'));
         return;
       }
       const skillRepo = dataSource.getRepository('Skill');
       const existingSkill = await skillRepo.findOne({ where: { id: skillId } });
       if (!existingSkill) {
         logger.warn('找不到此技能');
-        res.status(400).json({
-          status: 'failed',
-          message: '找不到此技能',
-        });
+        next(appError(400, '找不到此技能'));
         return;
       }
       const updateCourse = await courseRepo.update(
@@ -212,10 +186,7 @@ router.put(
       );
       if (updateCourse.affected === 0) {
         logger.warn('更新課程失敗');
-        res.status(400).json({
-          status: 'failed',
-          message: '更新課程失敗',
-        });
+        next(appError(400, '更新課程失敗'));
         return;
       }
       const savedCourse = await courseRepo.findOne({
@@ -239,10 +210,8 @@ router.post('/coaches/:userId', async (req, res, next) => {
     const { userId } = req.params;
     if (isNotValidUuid(userId)) {
       logger.warn('使用者 id 格式不正確');
-      return res.status(400).json({
-        status: 'failed',
-        message: '使用者 id 格式不正確',
-      });
+      next(appError(400, '使用者 id 格式不正確'));
+      return;
     }
     const {
       experience_years: experienceYears,
@@ -256,10 +225,7 @@ router.post('/coaches/:userId', async (req, res, next) => {
       isNotValidString(description)
     ) {
       logger.warn('欄位未填寫正確');
-      res.status(400).json({
-        status: 'failed',
-        message: '欄位未填寫正確',
-      });
+      next(appError(400, '欄位未填寫正確'));
       return;
     }
     if (
@@ -268,10 +234,7 @@ router.post('/coaches/:userId', async (req, res, next) => {
       !profileImageUrl.startsWith('https')
     ) {
       logger.warn('大頭貼網址錯誤');
-      res.status(400).json({
-        status: 'failed',
-        message: '欄位未填寫正確',
-      });
+      next(appError(400, '欄位未填寫正確'));
       return;
     }
     const userRepository = dataSource.getRepository('User');
@@ -281,17 +244,11 @@ router.post('/coaches/:userId', async (req, res, next) => {
     });
     if (!existingUser) {
       logger.warn('使用者不存在');
-      res.status(400).json({
-        status: 'failed',
-        message: '使用者不存在',
-      });
+      next(appError(400, '使用者不存在'));
       return;
     } else if (existingUser.role === 'COACH') {
       logger.warn('使用者已經是教練');
-      res.status(409).json({
-        status: 'failed',
-        message: '使用者已經是教練',
-      });
+      next(appError(409, '使用者已經是教練'));
       return;
     }
     const coachRepo = dataSource.getRepository('Coach');
@@ -312,10 +269,7 @@ router.post('/coaches/:userId', async (req, res, next) => {
     );
     if (updatedUser.affected === 0) {
       logger.warn('更新使用者失敗');
-      res.status(400).json({
-        status: 'failed',
-        message: '更新使用者失敗',
-      });
+      next(appError(400, '更新使用者失敗'));
       return;
     }
     const savedCoach = await coachRepo.save(newCoach);

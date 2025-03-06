@@ -18,6 +18,7 @@ const {
   isNotValidEmail,
   isNotValidPassword,
 } = require('../utils/validUtils');
+const appError = require('../utils/appError');
 
 // 新增使用者
 router.post('/signup', async (req, res, next) => {
@@ -33,21 +34,19 @@ router.post('/signup', async (req, res, next) => {
       isNotValidString(password)
     ) {
       logger.warn('欄位未填寫正確');
-      res.status(400).json({
-        status: 'failed',
-        message: '欄位未填寫正確',
-      });
+      next(appError(400, '欄位未填寫正確'));
       return;
     }
     if (isNotValidPassword(password)) {
       logger.warn(
         '建立使用者錯誤: 密碼不符合規則，需要包含英文數字大小寫，最短8個字，最長16個字'
       );
-      res.status(400).json({
-        status: 'failed',
-        message:
-          '密碼不符合規則，需要包含英文數字大小寫，最短8個字，最長16個字',
-      });
+      next(
+        appError(
+          400,
+          '密碼不符合規則，需要包含英文數字大小寫，最短8個字，最長16個字'
+        )
+      );
       return;
     }
     const userRepository = dataSource.getRepository('User');
@@ -58,10 +57,7 @@ router.post('/signup', async (req, res, next) => {
 
     if (existingUser) {
       logger.warn('建立使用者錯誤: Email 已被使用');
-      res.status(409).json({
-        status: 'failed',
-        message: 'Email 已被使用',
-      });
+      next(appError(409, 'Email 已被使用'));
       return;
     }
 
@@ -103,21 +99,19 @@ router.post('/login', async (req, res, next) => {
       isNotValidString(password)
     ) {
       logger.warn('欄位未填寫正確');
-      res.status(400).json({
-        status: 'failed',
-        message: '欄位未填寫正確',
-      });
+      next(appError(400, '欄位未填寫正確'));
       return;
     }
     if (isNotValidPassword(password)) {
       logger.warn(
         '密碼不符合規則，需要包含英文數字大小寫，最短8個字，最長16個字'
       );
-      res.status(400).json({
-        status: 'failed',
-        message:
-          '密碼不符合規則，需要包含英文數字大小寫，最短8個字，最長16個字',
-      });
+      next(
+        appError(
+          400,
+          '密碼不符合規則，需要包含英文數字大小寫，最短8個字，最長16個字'
+        )
+      );
       return;
     }
     const userRepository = dataSource.getRepository('User');
@@ -127,19 +121,13 @@ router.post('/login', async (req, res, next) => {
     });
 
     if (!existingUser) {
-      res.status(400).json({
-        status: 'failed',
-        message: '使用者不存在或密碼輸入錯誤',
-      });
+      next(appError(400, '使用者不存在或密碼輸入錯誤'));
       return;
     }
     logger.info(`使用者資料: ${JSON.stringify(existingUser)}`);
     const isMatch = await bcrypt.compare(password, existingUser.password);
     if (!isMatch) {
-      res.status(400).json({
-        status: 'failed',
-        message: '使用者不存在或密碼輸入錯誤',
-      });
+      next(appError(400, '使用者不存在或密碼輸入錯誤'));
       return;
     }
     const token = await generateJWT(
@@ -172,10 +160,7 @@ router.get('/profile', auth, async (req, res, next) => {
     const { id } = req.user;
     if (!id) {
       logger.warn('未提供有效的使用者ID');
-      res.status(401).json({
-        status: 'failed',
-        message: '驗證失敗，請重新登入',
-      });
+      next(appError(401, '驗證失敗，請重新登入'));
       return;
     }
 
@@ -189,10 +174,7 @@ router.get('/profile', auth, async (req, res, next) => {
 
     if (!user) {
       logger.warn(`找不到使用者資料 ID: ${id}`);
-      res.status(404).json({
-        status: 'failed',
-        message: '找不到使用者資料',
-      });
+      next(appError(404, '找不到使用者資料'));
       return;
     }
 
@@ -218,10 +200,7 @@ router.put('/profile', auth, async (req, res, next) => {
 
     if (isUndefined(name) || isNotValidString(name)) {
       logger.warn(`欄位驗證失敗 - name: ${name}`);
-      res.status(400).json({
-        status: 'failed',
-        message: '欄位未填寫正確',
-      });
+      next(appError(400, '欄位未填寫正確'));
       return;
     }
     const userRepository = dataSource.getRepository('User');
@@ -232,19 +211,13 @@ router.put('/profile', auth, async (req, res, next) => {
 
     if (!user) {
       logger.warn(`找不到使用者 ID: ${id}`);
-      res.status(404).json({
-        status: 'failed',
-        message: '找不到使用者資料',
-      });
+      next(appError(404, '找不到使用者資料'));
       return;
     }
 
     if (user.name === name) {
       logger.info(`使用者名稱未變更 ID: ${id}`);
-      res.status(400).json({
-        status: 'failed',
-        message: '使用者名稱未變更',
-      });
+      next(appError(400, '使用者名稱未變更'));
       return;
     }
     const updatedResult = await userRepository.update(
@@ -257,10 +230,7 @@ router.put('/profile', auth, async (req, res, next) => {
       }
     );
     if (updatedResult.affected === 0) {
-      res.status(400).json({
-        status: 'failed',
-        message: '更新使用者資料失敗',
-      });
+      next(appError(400, '更新使用者資料失敗'));
       return;
     }
     const result = await userRepository.findOne({

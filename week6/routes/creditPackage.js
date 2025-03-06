@@ -15,6 +15,7 @@ const {
   isNotValidString,
   isNotValidInteger,
 } = require('../utils/validUtils');
+const appError = require('../utils/appError');
 
 router.get('/', async (req, res, next) => {
   try {
@@ -43,10 +44,7 @@ router.post('/', async (req, res, next) => {
       isNotValidInteger(price)
     ) {
       logger.warn('欄位未填寫正確');
-      res.status(400).json({
-        status: 'failed',
-        message: '欄位未填寫正確',
-      });
+      next(appError(400, '欄位未填寫正確'));
       return;
     }
     const creditPackageRepo = await dataSource.getRepository('CreditPackage');
@@ -91,10 +89,7 @@ router.post('/:creditPackageId', auth, async (req, res, next) => {
       },
     });
     if (!creditPackage) {
-      res.status(400).json({
-        status: 'failed',
-        message: 'ID 錯誤',
-      });
+      next(appError(400, 'ID 錯誤'));
       return;
     }
     const creditPurchaseRepo = dataSource.getRepository('CreditPurchase');
@@ -122,10 +117,7 @@ router.delete('/:creditPackageId', async (req, res, next) => {
     console.log(creditPackageId);
     if (isUndefined(creditPackageId) || isNotValidString(creditPackageId)) {
       logger.warn('ID 錯誤');
-      res.status(400).json({
-        status: 'failed',
-        message: 'ID 錯誤',
-      });
+      next(appError(400, 'ID 錯誤'));
       return;
     }
     const result = await dataSource
@@ -134,10 +126,7 @@ router.delete('/:creditPackageId', async (req, res, next) => {
 
     if (result.affected === 0) {
       logger.warn('ID 錯誤');
-      res.status(400).json({
-        status: 'failed',
-        message: 'ID 錯誤',
-      });
+      next(appError(400, 'ID 錯誤'));
       return;
     }
     res.status(200).json({
