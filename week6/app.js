@@ -71,7 +71,8 @@ app.use((req, res, next) => {
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
-  // 開發環境記錄完整錯誤
+  const statusCode = err.status || 500;
+
   if (!isProd) {
     req.log.error({
       err: {
@@ -81,24 +82,19 @@ app.use((err, req, res, next) => {
       },
     });
   } else {
-    // 生產環境只記錄基本錯誤資訊
     req.log.error({
       err: {
-        message: '伺服器錯誤',
-        statusCode: err.status || 500,
+        message: statusCode === 500 ? '伺服器錯誤' : err.message,
+        statusCode: statusCode,
       },
     });
   }
 
-  const statusCode = err.status || 500;
-
-  // 準備錯誤回應
   const errorResponse = {
     status: statusCode === 500 ? 'error' : 'failed',
     message: err.message || '伺服器錯誤',
   };
 
-  // 開發環境下添加錯誤詳細資訊
   if (!isProd) {
     errorResponse.error = {
       type: err.constructor.name,
@@ -106,8 +102,7 @@ app.use((err, req, res, next) => {
       stack: err.stack,
       ...(err.errors && { details: err.errors }),
     };
-  } else {
-    // 生產環境統一錯誤訊息
+  } else if (statusCode === 500) {
     errorResponse.message = '伺服器錯誤';
   }
 
