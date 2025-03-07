@@ -17,6 +17,7 @@ const {
   isNotValidString,
   isNotValidEmail,
   isNotValidPassword,
+  isNotValidName,
 } = require('../utils/validUtils');
 const appError = require('../utils/appError');
 
@@ -58,6 +59,19 @@ router.post('/signup', async (req, res, next) => {
     if (existingUser) {
       logger.warn('建立使用者錯誤: Email 已被使用');
       next(appError(409, 'Email 已被使用'));
+      return;
+    }
+
+    if (isNotValidName(name)) {
+      logger.warn(
+        '建立使用者錯誤: 名稱不符合規則，最少2個字，最多10個字，不可包含任何特殊符號與空白'
+      );
+      next(
+        appError(
+          400,
+          '名稱不符合規則：最少2個字，最多10個字，不可包含任何特殊符號與空白'
+        )
+      );
       return;
     }
 
@@ -202,6 +216,18 @@ router.put('/profile', auth, async (req, res, next) => {
     if (isUndefined(name) || isNotValidString(name)) {
       logger.warn(`欄位驗證失敗 - name: ${name}`);
       next(appError(400, '欄位未填寫正確'));
+      return;
+    }
+    if (isNotValidName(name)) {
+      logger.warn(
+        `欄位驗證失敗 - name: ${name}, 名稱不符合規則，最少2個字，最多10個字，不可包含任何特殊符號與空白`
+      );
+      next(
+        appError(
+          400,
+          '名稱不符合規則：最少2個字，最多10個字，不可包含任何特殊符號與空白'
+        )
+      );
       return;
     }
     const userRepository = dataSource.getRepository('User');
