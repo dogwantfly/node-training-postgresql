@@ -11,9 +11,11 @@ const {
   isNotValidUuid,
 } = require('../utils/validUtils');
 const appError = require('../utils/appError');
+const handleErrorAsync = require('../utils/handleErrorAsync');
 
-router.get('/', async (req, res, next) => {
-  try {
+router.get(
+  '/',
+  handleErrorAsync(async (req, res, next) => {
     const skill = await dataSource.getRepository('Skill').find({
       select: ['id', 'name'],
     });
@@ -21,14 +23,12 @@ router.get('/', async (req, res, next) => {
       status: 'success',
       data: skill,
     });
-  } catch (error) {
-    logger.error(error);
-    next(error);
-  }
-});
+  })
+);
 
-router.post('/', async (req, res, next) => {
-  try {
+router.post(
+  '/',
+  handleErrorAsync(async (req, res, next) => {
     const { name } = req.body;
     if (isUndefined(name) || isNotValidString(name)) {
       next(appError(400, '欄位未填寫正確'));
@@ -52,14 +52,12 @@ router.post('/', async (req, res, next) => {
       status: 'success',
       data: result,
     });
-  } catch (error) {
-    logger.error(error);
-    next(error);
-  }
-});
+  })
+);
 
-router.delete('/:skillId', async (req, res, next) => {
-  try {
+router.delete(
+  '/:skillId',
+  handleErrorAsync(async (req, res, next) => {
     const { skillId } = req.params;
     if (
       isUndefined(skillId) ||
@@ -79,10 +77,7 @@ router.delete('/:skillId', async (req, res, next) => {
       data: result,
     });
     res.end();
-  } catch (error) {
-    logger.error(error);
-    next(error);
-  }
-});
+  })
+);
 
 module.exports = router;

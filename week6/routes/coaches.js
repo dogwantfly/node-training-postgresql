@@ -10,9 +10,11 @@ const {
   isNotValidDate,
 } = require('../utils/validUtils');
 const appError = require('../utils/appError');
+const handleErrorAsync = require('../utils/handleErrorAsync');
 
-router.get('/', async (req, res, next) => {
-  try {
+router.get(
+  '/',
+  handleErrorAsync(async (req, res, next) => {
     const { page = 1, per = 10 } = req.query;
     if (isUndefined(page) || isNotValidString(page) || page < 1) {
       next(appError(400, '頁碼錯誤'));
@@ -47,14 +49,12 @@ router.get('/', async (req, res, next) => {
       status: 'success',
       data: coaches,
     });
-  } catch (error) {
-    logger.error(error);
-    next(error);
-  }
-});
+  })
+);
 
-router.get('/:coachId', async (req, res, next) => {
-  try {
+router.get(
+  '/:coachId',
+  handleErrorAsync(async (req, res, next) => {
     const { coachId } = req.params;
     if (isUndefined(coachId) || isNotValidUuid(coachId)) {
       next(appError(400, 'ID 錯誤'));
@@ -78,9 +78,6 @@ router.get('/:coachId', async (req, res, next) => {
       status: 'success',
       data: coach,
     });
-  } catch (error) {
-    logger.error(error);
-    next(error);
-  }
-});
+  })
+);
 module.exports = router;

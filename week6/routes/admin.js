@@ -17,9 +17,13 @@ const {
   isNotValidDate,
 } = require('../utils/validUtils');
 const appError = require('../utils/appError');
+const handleErrorAsync = require('../utils/handleErrorAsync');
 
-router.post('/coaches/courses', auth, isCoach, async (req, res, next) => {
-  try {
+router.post(
+  '/coaches/courses',
+  auth,
+  isCoach,
+  handleErrorAsync(async (req, res, next) => {
     const {
       user_id: userId,
       skill_id: skillId,
@@ -100,25 +104,77 @@ router.post('/coaches/courses', auth, isCoach, async (req, res, next) => {
         course,
       },
     });
-  } catch (error) {
-    logger.error(error);
-    next(error);
-  }
-});
+  })
+);
 
 router.put(
   '/coaches/courses/:courseId',
   auth,
   isCoach,
-  async (req, res, next) => {
-    try {
-      const { courseId } = req.params;
-      if (isNotValidUuid(courseId)) {
-        logger.warn('課程 id 格式不正確');
-        next(appError(400, '課程 id 格式不正確'));
-        return;
-      }
-      const {
+  handleErrorAsync(async (req, res, next) => {
+    const { courseId } = req.params;
+    if (isNotValidUuid(courseId)) {
+      logger.warn('課程 id 格式不正確');
+      next(appError(400, '課程 id 格式不正確'));
+      return;
+    }
+    const {
+      skill_id: skillId,
+      name,
+      description,
+      start_at: startAt,
+      end_at: endAt,
+      max_participants: maxParticipants,
+      meeting_url: meetingUrl,
+    } = req.body;
+    if (isNotValidUuid(skillId)) {
+      logger.warn('skill id 格式不正確');
+      next(appError(400, 'skill id 格式不正確'));
+      return;
+    }
+    if (
+      isNotValidUuid(courseId) ||
+      isUndefined(skillId) ||
+      isNotValidUuid(skillId) ||
+      isUndefined(name) ||
+      isNotValidString(name) ||
+      isUndefined(description) ||
+      isNotValidString(description) ||
+      isUndefined(startAt) ||
+      isNotValidDate(startAt) ||
+      isUndefined(endAt) ||
+      isNotValidDate(endAt) ||
+      isUndefined(maxParticipants) ||
+      isNotValidInteger(maxParticipants) ||
+      isUndefined(meetingUrl) ||
+      isNotValidString(meetingUrl) ||
+      !meetingUrl.startsWith('https')
+    ) {
+      logger.warn('欄位未填寫正確');
+      next(appError(400, '欄位未填寫正確'));
+      return;
+    }
+    const courseRepo = dataSource.getRepository('Course');
+    const existingCourse = await courseRepo.findOne({
+      where: { id: courseId },
+    });
+    if (!existingCourse) {
+      logger.warn('課程不存在');
+      next(appError(400, '課程不存在'));
+      return;
+    }
+    const skillRepo = dataSource.getRepository('Skill');
+    const existingSkill = await skillRepo.findOne({ where: { id: skillId } });
+    if (!existingSkill) {
+      logger.warn('找不到此技能');
+      next(appError(400, '找不到此技能'));
+      return;
+    }
+    const updateCourse = await courseRepo.update(
+      {
+        id: courseId,
+      },
+      {
         skill_id: skillId,
         name,
         description,
@@ -126,87 +182,28 @@ router.put(
         end_at: endAt,
         max_participants: maxParticipants,
         meeting_url: meetingUrl,
-      } = req.body;
-      if (isNotValidUuid(skillId)) {
-        logger.warn('skill id 格式不正確');
-        next(appError(400, 'skill id 格式不正確'));
-        return;
       }
-      if (
-        isNotValidUuid(courseId) ||
-        isUndefined(skillId) ||
-        isNotValidUuid(skillId) ||
-        isUndefined(name) ||
-        isNotValidString(name) ||
-        isUndefined(description) ||
-        isNotValidString(description) ||
-        isUndefined(startAt) ||
-        isNotValidDate(startAt) ||
-        isUndefined(endAt) ||
-        isNotValidDate(endAt) ||
-        isUndefined(maxParticipants) ||
-        isNotValidInteger(maxParticipants) ||
-        isUndefined(meetingUrl) ||
-        isNotValidString(meetingUrl) ||
-        !meetingUrl.startsWith('https')
-      ) {
-        logger.warn('欄位未填寫正確');
-        next(appError(400, '欄位未填寫正確'));
-        return;
-      }
-      const courseRepo = dataSource.getRepository('Course');
-      const existingCourse = await courseRepo.findOne({
-        where: { id: courseId },
-      });
-      if (!existingCourse) {
-        logger.warn('課程不存在');
-        next(appError(400, '課程不存在'));
-        return;
-      }
-      const skillRepo = dataSource.getRepository('Skill');
-      const existingSkill = await skillRepo.findOne({ where: { id: skillId } });
-      if (!existingSkill) {
-        logger.warn('找不到此技能');
-        next(appError(400, '找不到此技能'));
-        return;
-      }
-      const updateCourse = await courseRepo.update(
-        {
-          id: courseId,
-        },
-        {
-          skill_id: skillId,
-          name,
-          description,
-          start_at: startAt,
-          end_at: endAt,
-          max_participants: maxParticipants,
-          meeting_url: meetingUrl,
-        }
-      );
-      if (updateCourse.affected === 0) {
-        logger.warn('更新課程失敗');
-        next(appError(400, '更新課程失敗'));
-        return;
-      }
-      const savedCourse = await courseRepo.findOne({
-        where: { id: courseId },
-      });
-      res.status(200).json({
-        status: 'success',
-        data: {
-          course: savedCourse,
-        },
-      });
-    } catch (error) {
-      logger.error(error);
-      next(error);
+    );
+    if (updateCourse.affected === 0) {
+      logger.warn('更新課程失敗');
+      next(appError(400, '更新課程失敗'));
+      return;
     }
-  }
+    const savedCourse = await courseRepo.findOne({
+      where: { id: courseId },
+    });
+    res.status(200).json({
+      status: 'success',
+      data: {
+        course: savedCourse,
+      },
+    });
+  })
 );
 
-router.post('/coaches/:userId', async (req, res, next) => {
-  try {
+router.post(
+  '/coaches/:userId',
+  handleErrorAsync(async (req, res, next) => {
     const { userId } = req.params;
     if (isNotValidUuid(userId)) {
       logger.warn('使用者 id 格式不正確');
@@ -284,10 +281,7 @@ router.post('/coaches/:userId', async (req, res, next) => {
         coach: savedCoach,
       },
     });
-  } catch (error) {
-    logger.error(error);
-    next(error);
-  }
-});
+  })
+);
 
 module.exports = router;

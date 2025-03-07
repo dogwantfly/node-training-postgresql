@@ -48,6 +48,7 @@ app.use((req, res, next) => {
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   req.log.error(err);
+  logger.error(err);
   const statusCode = err.status || 500; // 400, 409, 500 ...
   res.status(statusCode).json({
     status: statusCode === 500 ? 'error' : 'failed',

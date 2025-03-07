@@ -16,9 +16,11 @@ const {
   isNotValidInteger,
 } = require('../utils/validUtils');
 const appError = require('../utils/appError');
+const handleErrorAsync = require('../utils/handleErrorAsync');
 
-router.get('/', async (req, res, next) => {
-  try {
+router.get(
+  '/',
+  handleErrorAsync(async (req, res, next) => {
     const packages = await dataSource.getRepository('CreditPackage').find({
       select: ['id', 'name', 'credit_amount', 'price', 'createdAt'],
     });
@@ -26,14 +28,12 @@ router.get('/', async (req, res, next) => {
       status: 'success',
       data: packages,
     });
-  } catch (error) {
-    logger.error('取得 credit package 錯誤', error);
-    next(error);
-  }
-});
+  })
+);
 
-router.post('/', async (req, res, next) => {
-  try {
+router.post(
+  '/',
+  handleErrorAsync(async (req, res, next) => {
     const { name, credit_amount, price } = req.body;
     if (
       isUndefined(name) ||
@@ -72,14 +72,13 @@ router.post('/', async (req, res, next) => {
       status: 'success',
       data: result,
     });
-  } catch (error) {
-    logger.error('新增 credit package 錯誤', error);
-    next(error);
-  }
-});
+  })
+);
 
-router.post('/:creditPackageId', auth, async (req, res, next) => {
-  try {
+router.post(
+  '/:creditPackageId',
+  auth,
+  handleErrorAsync(async (req, res, next) => {
     const { id } = req.user;
     const { creditPackageId } = req.params;
     const creditPackageRepo = dataSource.getRepository('CreditPackage');
@@ -105,14 +104,12 @@ router.post('/:creditPackageId', auth, async (req, res, next) => {
       status: 'success',
       data: null,
     });
-  } catch (error) {
-    logger.error(error);
-    next(error);
-  }
-});
+  })
+);
 
-router.delete('/:creditPackageId', async (req, res, next) => {
-  try {
+router.delete(
+  '/:creditPackageId',
+  handleErrorAsync(async (req, res, next) => {
     const { creditPackageId } = req.params;
     console.log(creditPackageId);
     if (isUndefined(creditPackageId) || isNotValidString(creditPackageId)) {
@@ -132,10 +129,7 @@ router.delete('/:creditPackageId', async (req, res, next) => {
     res.status(200).json({
       status: 'success',
     });
-  } catch (error) {
-    logger.error('刪除 credit package 錯誤', error);
-    next(error);
-  }
-});
+  })
+);
 
 module.exports = router;

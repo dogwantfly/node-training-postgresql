@@ -11,9 +11,11 @@ const auth = require('../middlewares/auth')({
   logger,
 });
 const appError = require('../utils/appError');
+const handleErrorAsync = require('../utils/handleErrorAsync');
 
-router.get('/', async (req, res, next) => {
-  try {
+router.get(
+  '/',
+  handleErrorAsync(async (req, res, next) => {
     const courses = await dataSource.getRepository('Course').find({
       select: {
         id: true,
@@ -49,14 +51,13 @@ router.get('/', async (req, res, next) => {
         };
       }),
     });
-  } catch (error) {
-    logger.error(error);
-    next(error);
-  }
-});
+  })
+);
 
-router.post('/:courseId', auth, async (req, res, next) => {
-  try {
+router.post(
+  '/:courseId',
+  auth,
+  handleErrorAsync(async (req, res, next) => {
     const { id } = req.user;
     const { courseId } = req.params;
     const courseRepo = dataSource.getRepository('Course');
@@ -112,14 +113,13 @@ router.post('/:courseId', auth, async (req, res, next) => {
       status: 'success',
       data: null,
     });
-  } catch (error) {
-    logger.error(error);
-    next(error);
-  }
-});
+  })
+);
 
-router.delete('/:courseId', auth, async (req, res, next) => {
-  try {
+router.delete(
+  '/:courseId',
+  auth,
+  handleErrorAsync(async (req, res, next) => {
     const { id } = req.user;
     const { courseId } = req.params;
     const courseBookingRepo = dataSource.getRepository('CourseBooking');
@@ -152,10 +152,7 @@ router.delete('/:courseId', auth, async (req, res, next) => {
       status: 'success',
       data: null,
     });
-  } catch (error) {
-    logger.error(error);
-    next(error);
-  }
-});
+  })
+);
 
 module.exports = router;
