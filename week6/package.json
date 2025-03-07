@@ -8,6 +8,8 @@
     "stop": "docker compose --env-file .env stop",
     "clean": "docker compose --env-file .env down -v",
     "dev": "nodemon ./bin/www",
+    "prod": "cross-env NODE_ENV=production node ./bin/www",
+    "prod:win": "cross-env NODE_ENV=production node ./bin/www",
     "test:unit": "node --experimental-vm-modules node_modules/.bin/jest --config ./jest.config.js --coverage --roots ./test/unit",
     "test:integration": "node --experimental-vm-modules node_modules/.bin/jest --testSequencer=./test/sequencer -i --config ./jest.config.js --coverage --roots ./test/integration",
     "init:schema": "typeorm schema:sync -d ./db/data-source.js"
@@ -29,6 +31,7 @@
     "typeorm": "^0.3.20"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "eslint": "^8.57.1",
     "eslint-config-standard": "^17.1.0",
     "eslint-plugin-import": "^2.31.0",

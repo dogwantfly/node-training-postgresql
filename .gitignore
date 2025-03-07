@@ -108,6 +108,8 @@ mochawesome-report/
 doc/
 upload/
 *.env
+.env.development
+.env.production
 .vscode/
 .idea/
 .DS_Store
