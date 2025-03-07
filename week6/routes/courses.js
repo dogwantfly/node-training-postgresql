@@ -16,26 +16,25 @@ const handleErrorAsync = require('../utils/handleErrorAsync');
 router.get(
   '/',
   handleErrorAsync(async (req, res, next) => {
-    const courses = await dataSource.getRepository('Course').find({
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        start_at: true,
-        end_at: true,
-        max_participants: true,
-        User: {
-          name: true,
-        },
-        Skill: {
-          name: true,
-        },
-      },
-      relations: {
-        User: true,
-        Skill: true,
-      },
-    });
+    const courseRepository = dataSource.getRepository('Course');
+    const courses = await courseRepository
+      .createQueryBuilder('course')
+      .leftJoinAndSelect('course.user', 'user')
+      .leftJoinAndSelect('course.skill', 'skill')
+      .select([
+        'course.id',
+        'course.name',
+        'course.description',
+        'course.start_at',
+        'course.end_at',
+        'course.max_participants',
+        'user.name',
+        'skill.id',
+        'skill.name',
+      ])
+      .orderBy('course.created_at', 'DESC')
+      .getMany();
+
     res.status(200).json({
       status: 'success',
       data: courses.map((course) => {
@@ -46,8 +45,8 @@ router.get(
           start_at: course.start_at,
           end_at: course.end_at,
           max_participants: course.max_participants,
-          coach_name: course.User.name,
-          skill_name: course.Skill.name,
+          coach_name: course.user?.name,
+          skill_name: course.skill?.name,
         };
       }),
     });
@@ -67,7 +66,7 @@ router.post(
       },
     });
     if (!course) {
-      next(appError(400, 'ID錯誤'));
+      next(appError(400, 'ID 錯誤'));
       return;
     }
     const creditPurchaseRepo = dataSource.getRepository('CreditPurchase');
@@ -76,6 +75,7 @@ router.post(
       where: {
         user_id: id,
         course_id: courseId,
+        cancelledAt: IsNull(),
       },
     });
     if (userCourseBooking) {
