@@ -42,6 +42,7 @@ module.exports = new EntitySchema({
     User: {
       target: 'User',
       type: 'one-to-one',
+      inverseSide: 'Coach',
       joinColumn: {
         name: 'user_id',
         referencedColumnName: 'id',

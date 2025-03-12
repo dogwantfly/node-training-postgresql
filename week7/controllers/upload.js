@@ -8,7 +8,7 @@ const ALLOWED_FILE_TYPES = {
   'image/jpeg': true,
   'image/png': true,
 };
-const BUCKET_NAME = 'image';
+const BUCKET_NAME = config.get('supabase').storageBucket;
 
 async function postUploadImage(req, res, next) {
   try {

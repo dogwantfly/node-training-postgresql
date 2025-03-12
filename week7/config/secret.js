@@ -5,4 +5,7 @@ module.exports = {
   //   serviceAccount: JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT),
   //   storageBucket: process.env.FIREBASE_STORAGE_BUCKET
   // }
-}
+  supabase: {
+    storageBucket: process.env.SUPABASE_STORAGE_BUCKET,
+  },
+};

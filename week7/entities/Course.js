@@ -58,6 +58,7 @@ module.exports = new EntitySchema({
     User: {
       target: 'User',
       type: 'many-to-one',
+      target: 'User',
       joinColumn: {
         name: 'user_id',
         referencedColumnName: 'id',
@@ -67,6 +68,7 @@ module.exports = new EntitySchema({
     Skill: {
       target: 'Skill',
       type: 'many-to-one',
+      target: 'Skill',
       joinColumn: {
         name: 'skill_id',
         referencedColumnName: 'id',
