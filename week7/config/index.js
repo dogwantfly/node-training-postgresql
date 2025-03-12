@@ -4,6 +4,7 @@ const result = dotenv.config()
 const db = require('./db')
 const web = require('./web')
 const secret = require('./secret')
+const supabase = require('./supabase')
 
 if (result.error) {
   throw result.error
@@ -11,7 +12,8 @@ if (result.error) {
 const config = {
   db,
   web,
-  secret
+  secret,
+  supabase
 }
 
 class ConfigManager {

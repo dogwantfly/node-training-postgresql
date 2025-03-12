@@ -1,60 +1,99 @@
-const formidable = require('formidable')
-const firebaseAdmin = require('firebase-admin')
+const formidable = require('formidable');
+const supabase = require('../config/supabase');
+const config = require('../config/index');
+const logger = require('../utils/logger')('UploadController');
 
-const config = require('../config/index')
-const logger = require('../utils/logger')('UploadController')
-
-firebaseAdmin.initializeApp({
-  credential: firebaseAdmin.credential.cert(config.get('secret.firebase.serviceAccount')),
-  storageBucket: config.get('secret.firebase.storageBucket')
-})
-const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 const ALLOWED_FILE_TYPES = {
   'image/jpeg': true,
-  'image/png': true
-}
-const bucket = firebaseAdmin.storage().bucket()
+  'image/png': true,
+};
+const BUCKET_NAME = 'image';
 
-async function postUploadImage (req, res, next) {
+async function postUploadImage(req, res, next) {
   try {
     const form = formidable.formidable({
       multiple: false,
       maxFileSize: MAX_FILE_SIZE,
       filter: ({ mimetype }) => {
-        // if (!ALLOWED_FILE_TYPES[mimetype]) {
-        //   const error = new Error('不支援的檔案格式')
-        //   error.statusCode = 400
-        //   throw error
-        // }
-        return !!ALLOWED_FILE_TYPES[mimetype]
-      }
-    })
-    const [fields, files] = await form.parse(req)
-    logger.info('files')
-    logger.info(files)
-    logger.info('fields')
-    logger.info(fields)
-    const filePath = files.file[0].filepath
-    const remoteFilePath = `images/${new Date().toISOString()}-${files.file[0].originalFilename}`
-    await bucket.upload(filePath, { destination: remoteFilePath })
-    const options = {
-      action: 'read',
-      expires: Date.now() + 24 * 60 * 60 * 1000
+        return !!ALLOWED_FILE_TYPES[mimetype]; // 只允許 JPEG、PNG
+      },
+    });
+
+    const [fields, files] = await form.parse(req);
+    logger.info('files', files);
+    logger.info('fields', fields);
+
+    if (!files.file || files.file.length === 0) {
+      return res.status(400).json({
+        status: 'failed',
+        message: '未上傳任何檔案'
+      });
     }
-    const [imageUrl] = await bucket.file(remoteFilePath).getSignedUrl(options)
-    logger.info(imageUrl)
+
+    const file = files.file[0];
+    const filePath = file.filepath;
+    const remoteFilePath = `images/${new Date().toISOString()}-${
+      file.originalFilename
+    }`;
+
+    // 讀取檔案內容
+    const fs = require('fs');
+    const fileBuffer = fs.readFileSync(filePath);
+
+    const { data:buckets, error: listBucketError } = await supabase.storage.listBuckets();
+    if (listBucketError) {
+      console.error('Error fetching buckets:', listBucketError);
+    } else {
+      console.log('Available buckets:', buckets);
+    }
+
+
+    // 檢查 bucket 是否存在
+    const { data: bucketExists, error: bucketError } = await supabase.storage
+      .getBucket(BUCKET_NAME);
+
+    if (bucketError) {
+      logger.error('Bucket error:', bucketError);
+      throw new Error('儲存服務無法使用');
+    }
+
+    // 上傳至 Supabase Storage
+    const { data, error } = await supabase.storage
+      .from(BUCKET_NAME)
+      .upload(remoteFilePath, fileBuffer, {
+        contentType: file.mimetype,
+        upsert: false,
+      });
+
+    if (error) {
+      logger.error('Upload error:', error);
+      throw error;
+    }
+
+    // 取得公開 URL
+    const { data: urlData } = supabase.storage
+      .from(BUCKET_NAME)
+      .getPublicUrl(remoteFilePath);
+
+    const publicURL = urlData.publicUrl;
+    logger.info('Uploaded Image URL:', publicURL);
+
+    // 清理暫存檔案
+    fs.unlinkSync(filePath);
+
     res.status(200).json({
       status: 'success',
       data: {
-        image_url: imageUrl
-      }
-    })
+        image_url: publicURL,
+      },
+    });
   } catch (error) {
-    logger.error(error)
-    next(error)
+    logger.error('Upload failed:', error);
+    next(error);
   }
 }
 
 module.exports = {
-  postUploadImage
-}
+  postUploadImage,
+};

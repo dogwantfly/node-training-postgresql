@@ -11,6 +11,7 @@ const adminRouter = require('./routes/admin')
 const coachRouter = require('./routes/coaches')
 const coursesRouter = require('./routes/courses')
 const uploadRouter = require('./routes/upload')
+const isProd = process.env.NODE_ENV === 'production';
 
 const app = express()
 app.use(cors())
@@ -41,18 +42,48 @@ app.use('/api/upload', uploadRouter)
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
-  req.log.error(err)
-  if (err.status) {
-    res.status(err.status).json({
-      status: 'failed',
-      message: err.message
-    })
-    return
+  const statusCode = err.status || 500;
+
+  // 開發環境記錄完整錯誤
+  if (!isProd) {
+    req.log.error({
+      err: {
+        type: err.constructor.name,
+        code: err.code,
+        message: err.message,
+        stack: err.stack,
+        ...(err.errors && { details: err.errors }),
+      },
+    });
+  } else {
+    // 生產環境只記錄基本錯誤資訊
+    req.log.error({
+      err: {
+        message: statusCode === 500 ? '伺服器錯誤' : err.message,
+        statusCode: statusCode,
+        code: err.code,
+      },
+    });
   }
-  res.status(500).json({
-    status: 'error',
-    message: '伺服器錯誤'
-  })
-})
+
+  const errorResponse = {
+    status: statusCode === 500 ? 'error' : 'failed',
+    message: err.message || '伺服器錯誤',
+  };
+
+  if (!isProd) {
+    errorResponse.error = {
+      type: err.constructor.name,
+      code: err.code,
+      message: err.message,
+      stack: err.stack,
+      ...(err.errors && { details: err.errors }),
+    };
+  } else if (statusCode === 500) {
+    errorResponse.message = '伺服器錯誤';
+  }
+
+  res.status(statusCode).json(errorResponse);
+});
 
 module.exports = app
