@@ -11,21 +11,27 @@ const auth = require('../middlewares/auth')({
   logger
 })
 const isCoach = require('../middlewares/isCoach')
+const handleErrorAsync = require('../utils/handleErrorAsync')
 
-router.post('/coaches/courses', auth, isCoach, admin.postCourse)
+router.post(
+  '/coaches/courses',
+  auth,
+  isCoach,
+  handleErrorAsync(admin.postCourse)
+)
 
-router.get('/coaches/revenue', auth, isCoach, admin.getCoachRevenue)
+router.get('/coaches/revenue', auth, isCoach, handleErrorAsync(admin.getCoachRevenue))
 
-router.get('/coaches/courses', auth, isCoach, admin.getCoachCourses)
+router.get('/coaches/courses', auth, isCoach, handleErrorAsync(admin.getCoachCourses))
 
-router.get('/coaches/courses/:courseId', auth, admin.getCoachCourseDetail)
+router.get('/coaches/courses/:courseId', auth, handleErrorAsync(admin.getCoachCourseDetail))
 
-router.put('/coaches/courses/:courseId', auth, admin.putCoachCourseDetail)
+router.put('/coaches/courses/:courseId', auth, handleErrorAsync(admin.putCoachCourseDetail))
 
-router.post('/coaches/:userId', admin.postCoach)
+router.post('/coaches/:userId', handleErrorAsync(admin.postCoach))
 
-router.put('/coaches', auth, isCoach, admin.putCoachProfile)
+router.put('/coaches', auth, isCoach, handleErrorAsync(admin.putCoachProfile))
 
-router.get('/coaches', auth, isCoach, admin.getCoachProfile)
+router.get('/coaches', auth, isCoach, handleErrorAsync(admin.getCoachProfile))
 
 module.exports = router
