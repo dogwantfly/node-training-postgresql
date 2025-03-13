@@ -9,9 +9,10 @@ const auth = require('../middlewares/auth')({
   userRepository: dataSource.getRepository('User'),
   logger
 })
+const handleErrorAsync = require('../utils/handleErrorAsync')
 
-router.get('/', courses.getAllCourses)
-router.post('/:courseId', auth, courses.postCourseBooking)
-router.delete('/:courseId', auth, courses.deleteCourseBooking)
+router.get('/', handleErrorAsync(courses.getAllCourses))
+router.post('/:courseId', auth, handleErrorAsync(courses.postCourseBooking))
+router.delete('/:courseId', auth, handleErrorAsync(courses.deleteCourseBooking))
 
 module.exports = router
