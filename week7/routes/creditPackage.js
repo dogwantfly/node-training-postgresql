@@ -10,13 +10,18 @@ const auth = require('../middlewares/auth')({
   userRepository: dataSource.getRepository('User'),
   logger
 })
+const handleErrorAsync = require('../utils/handleErrorAsync')
 
-router.get('/', creditPackage.getAll)
+router.get('/', handleErrorAsync(creditPackage.getAll))
 
-router.post('/', creditPackage.post)
+router.post('/', handleErrorAsync(creditPackage.post))
 
-router.post('/:creditPackageId', auth, creditPackage.postUserBuy)
+router.post(
+  '/:creditPackageId',
+  auth,
+  handleErrorAsync(creditPackage.postUserBuy)
+);
 
-router.delete('/:creditPackageId', creditPackage.deletePackage)
+router.delete('/:creditPackageId', handleErrorAsync(creditPackage.deletePackage))
 
 module.exports = router
