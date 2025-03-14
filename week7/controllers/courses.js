@@ -51,7 +51,7 @@ async function postCourseBooking (req, res, next) {
     },
   });
   if (!course) {
-    next(appError(400, 'ID錯誤'));
+    next(appError(400, 'ID 錯誤'));
     return;
   }
   const creditPurchaseRepo = dataSource.getRepository('CreditPurchase');
@@ -101,49 +101,38 @@ async function postCourseBooking (req, res, next) {
 }
 
 async function deleteCourseBooking (req, res, next) {
-  try {
-    const { id } = req.user
-    const { courseId } = req.params
-    const courseBookingRepo = dataSource.getRepository('CourseBooking')
-    const userCourseBooking = await courseBookingRepo.findOne({
-      where: {
-        user_id: id,
-        course_id: courseId,
-        cancelledAt: IsNull()
-      }
-    })
-    if (!userCourseBooking) {
-      res.status(400).json({
-        status: 'failed',
-        message: 'ID錯誤'
-      })
-      return
-    }
-    const updateResult = await courseBookingRepo.update(
-      {
-        user_id: id,
-        course_id: courseId,
-        cancelledAt: IsNull()
-      },
-      {
-        cancelledAt: new Date().toISOString()
-      }
-    )
-    if (updateResult.affected === 0) {
-      res.status(400).json({
-        status: 'failed',
-        message: '取消失敗'
-      })
-      return
-    }
-    res.status(200).json({
-      status: 'success',
-      data: null
-    })
-  } catch (error) {
-    logger.error(error)
-    next(error)
+  const { id } = req.user;
+  const { courseId } = req.params;
+  const courseBookingRepo = dataSource.getRepository('CourseBooking');
+  const userCourseBooking = await courseBookingRepo.findOne({
+    where: {
+      user_id: id,
+      course_id: courseId,
+      cancelledAt: IsNull(),
+    },
+  });
+  if (!userCourseBooking) {
+    next(appError(400, 'ID 錯誤'));
+    return;
   }
+  const updateResult = await courseBookingRepo.update(
+    {
+      user_id: id,
+      course_id: courseId,
+      cancelledAt: IsNull(),
+    },
+    {
+      cancelledAt: new Date().toISOString(),
+    }
+  );
+  if (updateResult.affected === 0) {
+    next(appError(400, '取消失敗'));
+    return;
+  }
+  res.status(200).json({
+    status: 'success',
+    data: null,
+  });
 }
 
 module.exports = {
