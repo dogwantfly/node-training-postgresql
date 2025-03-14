@@ -30,15 +30,18 @@ async function postUploadImage(req, res, next) {
   logger.info('fields', fields);
 
   if (!files.file || files.file.length === 0) {
-    next(appError(400, '未上傳任何檔案或檔案不符 JPEG、PNG'));
-    return;
+    logger.warn('未上傳檔案或格式不符');
+    return next(appError(400, '未上傳檔案或格式不符'));
   }
 
   const file = files.file[0];
+  if (!ALLOWED_FILE_TYPES[file.mimetype]) {
+    logger.warn(`不支援的檔案類型: ${file.mimetype}`);
+    return next(appError(400, '只支援 JPEG、PNG 格式'));
+  }
+
   const filePath = file.filepath;
-  const remoteFilePath = `images/${new Date().toISOString()}-${
-    file.originalFilename
-  }`;
+  const remoteFilePath = `images/${Date.now()}-${file.originalFilename}`;
 
   // 讀取檔案內容
   const fs = require('fs');
@@ -53,25 +56,25 @@ async function postUploadImage(req, res, next) {
   }
 
   // 檢查 bucket 是否存在
-  const { data: bucketExists, error: bucketError } =
-    await supabase.storage.getBucket(BUCKET_NAME);
+  const { data: bucketExists, error: bucketError } = await supabase.storage
+    .getBucket(BUCKET_NAME);
 
   if (bucketError) {
-    logger.error('Bucket error:', bucketError);
-    throw new Error('儲存服務無法使用');
+    logger.error('Bucket 錯誤:', bucketError);
+    return next(appError(500, '儲存服務暫時無法使用'));
   }
 
   // 上傳至 Supabase Storage
-  const { data, error } = await supabase.storage
+  const { data, error: uploadError } = await supabase.storage
     .from(BUCKET_NAME)
     .upload(remoteFilePath, fileBuffer, {
       contentType: file.mimetype,
       upsert: false,
     });
 
-  if (error) {
-    logger.error('Upload error:', error);
-    throw error;
+  if (uploadError) {
+    logger.error('上傳錯誤:', uploadError);
+    return next(appError(500, '檔案上傳失敗'));
   }
 
   // 取得公開 URL
