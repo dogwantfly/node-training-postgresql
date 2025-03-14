@@ -40,6 +40,15 @@ app.use('/api/coaches', coachRouter)
 app.use('/api/courses', coursesRouter)
 app.use('/api/upload', uploadRouter)
 
+app.use((req, res, next) => {
+  res.status(404).json({
+    status: 'error',
+    message: '無此路由',
+  });
+  return;
+});
+
+
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   const statusCode = err.status || 500;
