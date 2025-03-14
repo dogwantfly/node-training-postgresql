@@ -9,9 +9,10 @@ const auth = require('../middlewares/auth')({
   userRepository: dataSource.getRepository('User'),
   logger
 })
+const handleErrorAsync = require('../utils/handleErrorAsync')
 
 const router = express.Router()
 
-router.post('/', auth, upload.postUploadImage)
+router.post('/', auth, handleErrorAsync(upload.postUploadImage))
 
 module.exports = router
