@@ -91,31 +91,24 @@ async function postUserBuy (req, res, next) {
 }
 
 async function deletePackage (req, res, next) {
-  try {
-    const { creditPackageId } = req.params
-    if (isUndefined(creditPackageId) || isNotValidString(creditPackageId)) {
-      res.status(400).json({
-        status: 'failed',
-        message: '欄位未填寫正確'
-      })
-      return
-    }
-    const result = await dataSource.getRepository('CreditPackage').delete(creditPackageId)
-    if (result.affected === 0) {
-      res.status(400).json({
-        status: 'failed',
-        message: 'ID錯誤'
-      })
-      return
-    }
-    res.status(200).json({
-      status: 'success',
-      data: result
-    })
-  } catch (error) {
-    logger.error(error)
-    next(error)
+  const { creditPackageId } = req.params;
+  if (isUndefined(creditPackageId) || isNotValidUuid(creditPackageId)) {
+    logger.warn('ID 錯誤', creditPackageId);
+    next(appError(400, 'ID 錯誤'));
+    return;
   }
+  const result = await dataSource
+    .getRepository('CreditPackage')
+    .delete(creditPackageId);
+  if (result.affected === 0) {
+    logger.warn('刪除購買方案失敗', creditPackageId);
+    next(appError(400, '刪除購買方案失敗'));
+    return;
+  }
+  res.status(200).json({
+    status: 'success',
+    data: result,
+  });
 }
 
 module.exports = {
